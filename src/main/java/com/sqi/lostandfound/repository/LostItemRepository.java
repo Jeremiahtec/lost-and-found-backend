@@ -10,6 +10,7 @@ import java.util.List;
 public interface LostItemRepository extends MongoRepository<LostItem, String> {
 
     // Feed: all items sorted by time — handled via controller + Sort
+    List<LostItem> findByBranchOrderByTimestampDesc(String branch);
 
     // Filter by status (e.g. show only SEARCHING items)
     List<LostItem> findByStatusOrderByTimestampDesc(LostItem.ItemStatus status);
