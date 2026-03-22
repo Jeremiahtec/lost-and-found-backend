@@ -48,6 +48,8 @@ public class LostItem {
     // Who claimed this item
     private String claimedBy;
     private String branch;
+    // Reporter's contact — phone or email
+    private String reporterContact;
 
     // Contact info of the claimer
     private String claimContact;

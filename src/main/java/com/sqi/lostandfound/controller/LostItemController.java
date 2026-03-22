@@ -1,5 +1,6 @@
 package com.sqi.lostandfound.controller;
 
+import lombok.extern.slf4j.Slf4j;
 import com.sqi.lostandfound.model.LostItem;
 import com.sqi.lostandfound.repository.LostItemRepository;
 import jakarta.validation.Valid;
@@ -13,11 +14,47 @@ import org.springframework.web.server.ResponseStatusException;
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/items")
 @RequiredArgsConstructor
 @CrossOrigin(origins = "http://localhost:4200") // Angular dev server
 public class LostItemController {
+    private final NotificationService notificationService;
+    @PostMapping("/{id}/claim")
+    public ResponseEntity<LostItem> claimItem(
+            @PathVariable String id,
+            @RequestBody Map<String, String> body
+    ) {
+        LostItem item = repository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Item not found: " + id
+                ));
+
+        String claimedBy     = body.get("claimedBy");
+        String claimContact  = body.get("claimContact");
+
+        if (claimedBy == null || claimContact == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST, "claimedBy and claimContact are required"
+            );
+        }
+
+        item.setClaimedBy(claimedBy);
+        item.setClaimContact(claimContact);
+        item.setStatus(LostItem.ItemStatus.FOUND_PENDING);
+        LostItem saved = repository.save(item);
+
+        // Fire notifications asynchronously
+        try {
+            notificationService.notifyOnClaim(saved, claimedBy, claimContact);
+        } catch (Exception e) {
+            log.warn("Notification failed but claim was saved: {}", e.getMessage());
+        }
+
+        return ResponseEntity.ok(saved);
+    }
+
 
     private final LostItemRepository repository;
 
