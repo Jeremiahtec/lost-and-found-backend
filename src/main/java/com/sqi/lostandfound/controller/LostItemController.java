@@ -1,6 +1,7 @@
 package com.sqi.lostandfound.controller;
 
 import lombok.extern.slf4j.Slf4j;
+import com.sqi.lostandfound.service.NotificationService;
 import com.sqi.lostandfound.model.LostItem;
 import com.sqi.lostandfound.repository.LostItemRepository;
 import jakarta.validation.Valid;
@@ -161,32 +162,6 @@ public class LostItemController {
         updatedItem.setId(existing.getId());
         updatedItem.setTimestamp(existing.getTimestamp()); // preserve original timestamp
         return ResponseEntity.ok(repository.save(updatedItem));
-    }
-
-    // ── POST /api/items/{id}/claim ─────────────────────────────────────────
-    @PostMapping("/{id}/claim")
-    public ResponseEntity<LostItem> claimItem(
-            @PathVariable String id,
-            @RequestBody Map<String, String> body
-    ) {
-        LostItem item = repository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "Item not found: " + id
-                ));
-
-        String claimedBy = body.get("claimedBy");
-        String claimContact = body.get("claimContact");
-
-        if (claimedBy == null || claimContact == null) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST, "claimedBy and claimContact are required"
-            );
-        }
-
-        item.setClaimedBy(claimedBy);
-        item.setClaimContact(claimContact);
-        item.setStatus(LostItem.ItemStatus.FOUND_PENDING);
-        return ResponseEntity.ok(repository.save(item));
     }
 
     // ── DELETE /api/items/{id} ─────────────────────────────────────────────
